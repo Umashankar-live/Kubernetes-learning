@@ -1,0 +1,67 @@
+# Kubernetes Architecture: Zero to Hero (Day 1)
+
+## Overview
+This repository documents my understanding of **Kubernetes (K8s) Architecture**. While Docker is excellent for running individual containers, Kubernetes is a **container orchestration platform** that provides enterprise-level features like **Cluster Management**, **Auto-healing**, **Auto-scaling**, and **Advanced Networking/Load Balancing**.
+
+## Docker vs. Kubernetes
+In Docker, the simplest unit is a **Container**, whereas in Kubernetes, it is a **Pod**. A Pod acts as a wrapper over a container and provides advanced capabilities. While Docker typically uses `docker-shim` as a runtime, Kubernetes supports multiple runtimes through the **Kubernetes Container Interface**, including `containerd` and `CRI-O`,.
+
+---
+
+## Kubernetes Components
+The architecture is divided into two main sections: the **Control Plane (Master)** and the **Data Plane (Worker)**,.
+
+### 1. Control Plane (The "Brain")
+The Control Plane is responsible for making global decisions about the cluster and detecting/responding to events,.
+
+*   **API Server:** The "heart" of Kubernetes. It exposes the cluster to the external world and acts as the central hub where all internal and external requests are received,.
+*   **Scheduler:** The decision-maker for resource allocation. It determines which worker node has the available capacity to run a new Pod,.
+*   **etcd:** A consistent and highly-available **Key-Value Store**. It stores the entire cluster configuration and state, serving as the ultimate backup for the cluster,.
+*   **Controller Manager:** The manager for inbuilt controllers. It ensures that the "actual state" of the cluster matches the "desired state" (e.g., ensuring the correct number of replicas are running via the ReplicaSet controller).
+*   **Cloud Controller Manager (CCM):** Acts as a bridge between Kubernetes and cloud providers (AWS, Azure, GCP). it translates Kubernetes requests into cloud-specific API calls to manage resources like Load Balancers and Storage. This is not required for on-premise deployments.
+
+### 2. Data Plane (The "Muscle")
+The Data Plane consists of worker nodes that execute the actual application workloads,.
+
+*   **Kubelet:** The primary agent running on every worker node. It is responsible for creating Pods and ensuring they remain in a healthy, running state,. If a Pod fails, the Kubelet informs the Control Plane to trigger auto-healing.
+*   **Kube-proxy:** Handles networking and load balancing within the node. It assigns IP addresses to Pods and manages traffic routing, typically using **IP tables** on the Linux host,.
+*   **Container Runtime:** The software responsible for actually running the containers. Kubernetes is flexible and supports any runtime that implements the standard container interface, such as **containerd** or **CRI-O**,.
+
+---
+
+## Architecture Diagram
+
+```text
+       [ External Request ]
+                |
+                v
++-----------------------------------+
+|       CONTROL PLANE (Master)      |
+|  +-----------------------------+  |
+|  |         API SERVER          |  | <--- The Hub
+|  +-----------------------------+  |
+|      /        |          \        |
+| [Scheduler] [etcd] [Controller Mgr]|
++-----------------------------------+
+                |
+        (Communication Hub)
+                |
++-----------------------------------+
+|       DATA PLANE (Worker)         |
+|  +-----------------------------+  |
+|  |          KUBELET            |  | <--- Node Manager
+|  +-----------------------------+  |
+|  | Kube-Proxy | Runtime (CRI)  |  |
+|  +-----------------------------+  |
++-----------------------------------+
+```
+
+## Summary of Workflow
+1.  A user sends a request to the **API Server** to deploy an app.
+2.  The **Scheduler** selects a healthy **Worker Node**.
+3.  The **Kubelet** on that node receives the instruction and tells the **Container Runtime** to pull the image and start the container,.
+4.  **Kube-proxy** assigns an IP and ensures networking is configured for traffic.
+5.  **etcd** records the new state of the cluster for persistence.
+
+---
+*This documentation was created as part of the #ZeroToHero DevOps Course by Abhishek Veeramalla.*
