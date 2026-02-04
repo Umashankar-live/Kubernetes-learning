@@ -1,0 +1,15 @@
+**Question:** 
+In a Kubernetes cluster with multiple worker nodes, if an application is initially deployed to **Node 1**, but during a subsequent deployment **Node 1** is busy (resource-constrained), how does Kubernetes handle moving the deployment to **Node 2**, and what happens to the status of **Node 1**?
+
+**Answer:**
+Kubernetes manages this transition through a coordinated effort between the **Control Plane** (Master) and the **Data Plane** (Worker Nodes) using the following mechanism:
+
+1.  **Request Handling (API Server):** All requests to deploy or update an application are received by the **API Server**, which acts as the "heart" of the cluster and the central hub for communication.
+2.  **Resource Evaluation (Scheduler):** When the second deployment is initiated, the **Scheduler** evaluates the available resources across all worker nodes. If it detects that Node 1 is "busy" or lacks the required capacity, it identifies **Node 2** as the optimal location for the new Pod.
+3.  **Execution on the New Node (Kubelet & Runtime):** Once the decision is made, the **Kubelet** on Node 2 receives the instruction and works with the **Container Runtime** to pull the application image and start the container.
+4.  **Networking and Access (Kube-proxy):** To ensure the application remains reachable on the new node, **Kube-proxy** on Node 2 manages the networking configuration. It assigns the Pod an IP address and updates the **IP tables** on the Linux machine to handle traffic routing and load balancing.
+5.  **State Management (Controller Manager):** If the deployment is part of a **ReplicaSet**, the **Controller Manager** ensures that the "desired state" (the number of running instances) is maintained. If the intention was to move the application, it will terminate the old Pod on Node 1 once the new one on Node 2 is healthy.
+6.  **Status of Node 1:** Node 1 remains an active and integral part of the cluster. Even if the specific application is moved elsewhere, Node 1 continues to run its core components—the **Kubelet**, **Kube-proxy**, and **Container Runtime**—so it is ready to accept other workloads as soon as its resources become available again.
+
+**Summary:** 
+Kubernetes provides **Auto-healing** and **Auto-scaling** by decoupling the application from the physical hardware. Because the **Control Plane** manages the "Brain" (logic and decision-making) and the **Data Plane** provides the "Muscle" (execution), the application can seamlessly shift between nodes without the end-user losing access.
