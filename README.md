@@ -1,2 +1,2 @@
 # Kubernetes-learning
-Here I'll me posting Daily Learning of Kubernetes
+Here I'll be posting Daily Learning of Kubernetes
