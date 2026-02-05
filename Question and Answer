@@ -13,3 +13,35 @@ Kubernetes manages this transition through a coordinated effort between the **Co
 
 **Summary:** 
 Kubernetes provides **Auto-healing** and **Auto-scaling** by decoupling the application from the physical hardware. Because the **Control Plane** manages the "Brain" (logic and decision-making) and the **Data Plane** provides the "Muscle" (execution), the application can seamlessly shift between nodes without the end-user losing access.
+
+
+
+### **1. The "Auto-Healing" Scenario**
+**Question:** "You have a deployment where you requested three replicas of a Pod. Suddenly, one Pod crashes on Worker Node A. Describe the step-by-step internal workflow of the cluster components to restore the desired state."
+
+*   **Answer Insight:** This tests the interaction between the **Kubelet** and the **Control Plane**. The **Kubelet** on the worker node detects the failure and informs the Control Plane. The **Controller Manager** (specifically the ReplicaSet controller) realizes the "actual state" (2 pods) does not match the "desired state" (3 pods). The **Scheduler** then identifies a healthy node, and the **API Server** instructs the **Kubelet** on that node to create a new Pod via the **Container Runtime**.
+
+### **2. The "Cloud Migration" Scenario**
+**Question:** "Your company is moving its Kubernetes cluster from an on-premise data center to Microsoft Azure (AKS). Which specific component becomes necessary in this transition that wasn't used before, and why?"
+
+*   **Answer Insight:** This targets the **Cloud Controller Manager (CCM)**. In an on-premise setup, the CCM is not required. However, in **AKS**, the CCM acts as a translator, converting Kubernetes requests for resources like Load Balancers or Azure Disk storage into API calls that Azure understands.
+
+### **3. The "Resource Congestion" Scenario**
+**Question:** "If Worker Node 1 is at 95% CPU utilization and a user submits a request to deploy a high-resource application, which component prevents the cluster from crashing, and how does it make its decision?"
+
+*   **Answer Insight:** This focuses on the **Scheduler**. The Scheduler is the "decision-maker" that evaluates the available resources across all worker nodes. It receives the request from the **API Server** and, seeing that Node 1 is "busy," it will opt to schedule the Pod on Node 2 or 3 where capacity is available.
+
+### **4. The "Service Discovery" Scenario**
+**Question:** "You have an application scaled to five replicas across three different nodes. When an external user hits the application's URL, how does Kubernetes ensure the traffic reaches a healthy Pod, and which component manages this routing?"
+
+*   **Answer Insight:** This highlights **Kube-proxy**. It provides the networking and load-balancing capabilities for the cluster. It manages **IP tables** on the Linux machine to ensure that incoming traffic is distributed (e.g., 50/50 or appropriately across replicas) and assigned to the correct Pod IP addresses.
+
+### **5. The "Disaster Recovery" Scenario**
+**Question:** "The Master Node experiences a catastrophic failure, but the Worker Nodes are still running. You need to restore the cluster to its exact state from one hour ago. Which component is the most critical for this recovery, and what data does it hold?"
+
+*   **Answer Insight:** This emphasizes **etcd**. It is the "backing store" and "memory" of the cluster. Since it stores all cluster information as key-value pairs, having a backup of etcd is the only way to restore the cluster's objects and configuration.
+
+### **6. The "Runtime Flexibility" Scenario**
+**Question:** "A security audit requires you to switch from using Docker as your container engine to CRI-O. Do you need to rebuild your entire Kubernetes architecture to support this change?"
+
+*   **Answer Insight:** No. This tests the understanding of the **Container Interface**. Kubernetes is designed to be flexible and supports any **Container Runtime** that implements its standard interface, such as **containerd**, **CRI-O**, or **Docker Shim**. Only the runtime component on the worker nodes needs to be updated, as the rest of the architecture remains the same.
